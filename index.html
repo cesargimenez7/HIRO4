@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/2.0.8/aframe/build/aframe-ar.js"></script>
+  </head>
+
+  <body style="margin: 0; overflow: hidden;">
+    <a-scene embedded arjs>
+      <!-- Marcador Hiro -->
+      <a-marker preset="hiro">
+        <!-- Modelo animado -->
+        <a-entity id="diablo"
+                  gltf-model="diablo.glb"
+                  position="0 0.3 0"
+                  rotation="0 180 0"
+                  scale="0 0 0"
+                  animation__appear="property: scale; to: 2.2 2.2 2.2; dur: 1500; easing: easeOutElastic"
+                  animation__breathe="property: scale; dir: alternate; dur: 2000; easing: easeInOutSine; loop: true; to: 2.4 2.4 2.4">
+        </a-entity>
+      </a-marker>
+
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+      // Permitir rotación y zoom táctil
+      const model = document.querySelector('#diablo');
+      let isDragging = false, lastX = 0, rotationY = 180, scale = 2.2;
+
+      document.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          isDragging = true;
+          lastX = e.touches[0].clientX;
+        }
+      });
+
+      document.addEventListener('touchmove', (e) => {
+        if (isDragging && e.touches.length === 1) {
+          const dx = e.touches[0].clientX - lastX;
+          rotationY -= dx * 0.5; // sensibilidad
+          model.setAttribute('rotation', `0 ${rotationY} 0`);
+          lastX = e.touches[0].clientX;
+        } else if (e.touches.length === 2) {
+          // gesto de zoom
+          const dist = Math.hypot(
+            e.touches[0].clientX - e.touches[1].clientX,
+            e.touches[0].clientY - e.touches[1].clientY
+          );
+          if (!model.dataset.lastDist) model.dataset.lastDist = dist;
+          const scaleChange = (dist - model.dataset.lastDist) * 0.005;
+          scale = Math.min(Math.max(scale + scaleChange, 1.5), 3.5);
+          model.setAttribute('scale', `${scale} ${scale} ${scale}`);
+          model.dataset.lastDist = dist;
+        }
+      });
+
+      document.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) model.dataset.lastDist = null;
+        isDragging = false;
+      });
+    </script>
+  </body>
+</html>
